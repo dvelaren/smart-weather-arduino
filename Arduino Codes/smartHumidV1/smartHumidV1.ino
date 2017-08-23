@@ -35,28 +35,30 @@ unsigned long lastConnectionTime = 0; //Last connection ms time between server r
 //->ThingworxWiFi101 Vars
 ThingWorx myThing(host, port, appKey, thingName, serviceName);  //Declare the TWX object with his corresponding properties
 //->Azure Vars
-WiFiClient azureml;
+WiFiSSLClient azureml;
 String inputJson = "";  //Variable to store Input Properties JSON
+float anomaly = 0;
 
 //Subroutines & functions
 String POST(float temperature, float humidity, unsigned int year, unsigned int month, unsigned int day, unsigned int miltime) {
   String url = "/workspaces/895fa8d3bb90430f922f93009ce55c1f/services/050c7d14e4cc4c67ac1be67a229a51a2/execute?api-version=2.0&details=true";
   String body = "{\"Inputs\": {\"input1\": {\"ColumnNames\": [\"Temperature\", \"Humidity\", \"Year\", \"Month\", \"Day\", \"Military Time\", \"Anomaly\"], \"Values\": [[";
-  body += "\"" + String(temperature) + "\"," + "\"" + String(humidity) + "\"," + "\"" + String(year) + "\"," + "\"" + String(month) + "\"," + "\"" + String(day) + "\"," + "\"" + String(miltime) + "\", \"0\"], [";
-  body += "\"" + String(temperature) + "\"," + "\"" + String(humidity) + "\"," + "\"" + String(year) + "\"," + "\"" + String(month) + "\"," + "\"" + String(day) + "\"," + "\"" + String(miltime) + "\", \"0\"]]}}}";
+  body += "\"" + String((int)temperature) + "\"," + "\"" + String((int)humidity) + "\"," + "\"" + String((int)year) + "\"," + "\"" + String((int)month) + "\"," + "\"" + String((int)day) + "\"," + "\"" + String((int)miltime) + "\", \"\"]]}}}";
   if (azureml.connect("ussouthcentral.services.azureml.net", 443)) {
     Serial.println("Connected to: ussouthcentral.services.azureml.net");
     //Send the HTTP POST request:
     azureml.print(String("POST ") + url + " HTTP/1.1\r\n" +
                   "Host: ussouthcentral.services.azureml.net\r\n" +
                   "Authorization: Bearer RTLoD54tEcGGEqKgwUej2uhHyNz4da3u+BD9x9ZRCScRg7z2MgzuWC8FHgz3tsQJ4z6wyTjwLzEFZoOjKjDrsA==\r\n" +
-                  "Content-Type: application/json\r\n\r\n" +
+                  "Content-Type: application/json\r\n" +
+                  "Content-Length: " + String(body.length()) + "\r\n\r\n" +
                   body + "\r\n\r\n");
 
     Serial.print(String("POST ") + url + " HTTP/1.1\r\n" +
                  "Host: ussouthcentral.services.azureml.net\r\n" +
                  "Authorization: Bearer RTLoD54tEcGGEqKgwUej2uhHyNz4da3u+BD9x9ZRCScRg7z2MgzuWC8FHgz3tsQJ4z6wyTjwLzEFZoOjKjDrsA==\r\n" +
-                 "Content-Type: application/json\r\n\r\n" +
+                 "Content-Type: application/json\r\n" +
+                 "Content-Length: " + String(body.length()) + "\r\n\r\n" +
                  body + "\r\n\r\n");
 
     unsigned long timeout = millis();
@@ -130,8 +132,10 @@ void WiFiInit() {
 
 void setup() {
   //I/O configuration
-
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   //Physical outputs initialization
+  digitalWrite(LED_BUILTIN, LOW);
 
   //Communications
   Serial.begin(9600); //Serial communications with computer at 9600 bauds for debug purposes
@@ -147,7 +151,17 @@ void loop() {
     //propertyValues[1] = 35; //Read DHT11 humidity
     //myThing.post(sensorCount, propertyNames, propertyValues); //Send values to server platform
     inputJson = POST(propertyValues[0], propertyValues[1], 2017, 8, 22, 14);
+    //String json = "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(inputJson);
     Serial.println(inputJson);
+    //JsonObject& results = root["Results"]["output1"];
+    //results.printTo(Serial);
+    if(root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][8];
+    else Serial.println("Error parsing json");
+    Serial.println("Anomaly Score: " + String(anomaly,4));
+    if(anomaly<=0.4) digitalWrite(LED_BUILTIN, HIGH);
+    else digitalWrite(LED_BUILTIN, LOW);
     lastConnectionTime = millis();  //Refresh last connection time
   }
 }
