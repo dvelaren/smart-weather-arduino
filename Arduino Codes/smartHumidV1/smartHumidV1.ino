@@ -37,9 +37,52 @@ ThingWorx myThing(host, port, appKey, thingName, serviceName);  //Declare the TW
 //->Azure Vars
 WiFiSSLClient azureml;
 String inputJson = "";  //Variable to store Input Properties JSON
+String datetimeJson = "";
 float anomaly = 0;
 
 //Subroutines & functions
+String gettime() {
+  String url = "/api/utc/?location=CO";
+
+  if (azureml.connect("akshayanand.herokuapp.com", 443)) {
+    Serial.println("Connected to time server");
+    azureml.print(String("GET ") + url + " HTTP/1.1\r\n" +
+                  "Host: akshayanand.herokuapp.com\r\n" +
+                  "Content-Type: application/json\r\n\r\n");
+    Serial.print(String("GET ") + url + " HTTP/1.1\r\n" +
+                 "Host: akshayanand.herokuapp.com\r\n" +
+                 "Content-Type: application/json\r\n\r\n");
+
+    unsigned long timeout = millis();
+    while (azureml.available() == 0) {
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Client Timeout !");
+        azureml.stop();
+        return "Error";
+      }
+    }
+    String json = "";
+    boolean httpBody = false;
+    while (azureml.available()) {
+      String line = azureml.readStringUntil('\r');
+      Serial.print(line);
+      if (!httpBody && line.charAt(1) == '{') {
+        httpBody = true;
+      }
+      if (httpBody) {
+        json += line;
+        httpBody = false;
+      }
+    }
+    return json;
+  }
+  else {
+    Serial.println("The connection could not be established");
+    azureml.stop();
+    return "Error";
+  }
+}
+
 String POST(float temperature, float humidity, unsigned int year, unsigned int month, unsigned int day, unsigned int miltime) {
   String url = "/workspaces/895fa8d3bb90430f922f93009ce55c1f/services/050c7d14e4cc4c67ac1be67a229a51a2/execute?api-version=2.0&details=true";
   String body = "{\"Inputs\": {\"input1\": {\"ColumnNames\": [\"Temperature\", \"Humidity\", \"Year\", \"Month\", \"Day\", \"Military Time\", \"Anomaly\"], \"Values\": [[";
@@ -133,7 +176,7 @@ void WiFiInit() {
 void setup() {
   //I/O configuration
   pinMode(LED_BUILTIN, OUTPUT);
-  
+
   //Physical outputs initialization
   digitalWrite(LED_BUILTIN, LOW);
 
@@ -145,6 +188,8 @@ void setup() {
 
 void loop() {
   if (millis() - lastConnectionTime > TPOST) {  //Send request to server every TPOST seconds
+    datetimeJson = gettime();
+    Serial.println("datetimeJson: " + datetimeJson);
     propertyValues[0] = dht.readTemperature(); //Read DHT11 temperature
     propertyValues[1] = dht.readHumidity(); //Read DHT11 humidity
     //propertyValues[0] = 24; //Read DHT11 temperature
@@ -157,13 +202,11 @@ void loop() {
     Serial.println(inputJson);
     //JsonObject& results = root["Results"]["output1"];
     //results.printTo(Serial);
-    if(root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][8];
+    if (root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][8];
     else Serial.println("Error parsing json");
-    Serial.println("Anomaly Score: " + String(anomaly,4));
-    if(anomaly<=0.4) digitalWrite(LED_BUILTIN, HIGH);
+    Serial.println("Anomaly Score: " + String(anomaly, 4));
+    if (anomaly <= 0.4) digitalWrite(LED_BUILTIN, HIGH);
     else digitalWrite(LED_BUILTIN, LOW);
     lastConnectionTime = millis();  //Refresh last connection time
   }
 }
-
-
