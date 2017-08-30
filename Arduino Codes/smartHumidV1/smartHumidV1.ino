@@ -38,7 +38,7 @@ ThingWorx myThing(host, port, appKey, thingName, serviceName);  //Declare the TW
 WiFiSSLClient azureml;
 String inputJson = "";  //Variable to store Input Properties JSON
 String datetimeJson = "";
-float anomaly = 0;
+unsigned int anomaly = 0;
 
 //Subroutines & functions
 String gettime() {
@@ -195,18 +195,17 @@ void loop() {
     //propertyValues[0] = 24; //Read DHT11 temperature
     //propertyValues[1] = 35; //Read DHT11 humidity
     //myThing.post(sensorCount, propertyNames, propertyValues); //Send values to server platform
-    inputJson = POST(propertyValues[0], propertyValues[1], 2017, 8, 22, 14);
+    inputJson = POST(propertyValues[0], propertyValues[1], 2017, 8, 30, 1046);
     //String json = "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";
-    DynamicJsonBuffer jsonBuffer;
+    StaticJsonBuffer<1000> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(inputJson);
     Serial.println(inputJson);
     //JsonObject& results = root["Results"]["output1"];
     //results.printTo(Serial);
-    if (root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][8];
+    if (root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][1];
     else Serial.println("Error parsing json");
-    Serial.println("Anomaly Score: " + String(anomaly, 4));
-    if (anomaly <= 0.4) digitalWrite(LED_BUILTIN, HIGH);
-    else digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("Anomaly Score: " + String(anomaly));
+    digitalWrite(LED_BUILTIN, anomaly);
     lastConnectionTime = millis();  //Refresh last connection time
   }
 }
