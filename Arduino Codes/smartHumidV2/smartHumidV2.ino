@@ -42,7 +42,7 @@ float anomaly = 0;
 
 //Subroutines & functions
 String POST(float temperature, float humidity) {
-  String url = "/workspaces/895fa8d3bb90430f922f93009ce55c1f/services/050c7d14e4cc4c67ac1be67a229a51a2/execute?api-version=2.0&details=true";
+  String url = "/workspaces//895fa8d3bb90430f922f93009ce55c1f/services/3e33e9ed861e49b1ade3915ef6c96130/execute?api-version=2.0&details=true";
   String body = "{\"Inputs\": {\"input1\": {\"ColumnNames\": [\"Temperature\", \"Humidity\", \"Year\", \"Month\", \"Day\", \"Military Time\", \"Anomaly\"], \"Values\": [[";
   body += "\"" + String((int)temperature) + "\"," + "\"" + String((int)humidity) + "\"," + "\"" + "0" + "\"," + "\"" + "0" + "\"," + "\"" + "0" + "\"," + "\"" + "0" + "\", \"\"]]}}}";
   if (azureml.connect("ussouthcentral.services.azureml.net", 443)) {
@@ -50,14 +50,14 @@ String POST(float temperature, float humidity) {
     //Send the HTTP POST request:
     azureml.print(F(String("POST ") + url + " HTTP/1.1\r\n" +
                   "Host: ussouthcentral.services.azureml.net\r\n" +
-                  "Authorization: Bearer RTLoD54tEcGGEqKgwUej2uhHyNz4da3u+BD9x9ZRCScRg7z2MgzuWC8FHgz3tsQJ4z6wyTjwLzEFZoOjKjDrsA==\r\n" +
+                  "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
                   "Content-Type: application/json\r\n" +
                   "Content-Length: " + String(body.length()) + "\r\n\r\n" +
                   body + "\r\n\r\n"));
 
     Serial.print(F(String("POST ") + url + " HTTP/1.1\r\n" +
                  "Host: ussouthcentral.services.azureml.net\r\n" +
-                 "Authorization: Bearer RTLoD54tEcGGEqKgwUej2uhHyNz4da3u+BD9x9ZRCScRg7z2MgzuWC8FHgz3tsQJ4z6wyTjwLzEFZoOjKjDrsA==\r\n" +
+                 "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
                  "Content-Type: application/json\r\n" +
                  "Content-Length: " + String(body.length()) + "\r\n\r\n" +
                  body + "\r\n\r\n"));
