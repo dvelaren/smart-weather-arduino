@@ -13,13 +13,13 @@
 #define DHTPIN 2  //DHT sensor connected to Arduino digital pin 2
 
 //Server Constants
-const unsigned long TPOST = 5000;  //Time between requests to TWX server (every 2 secs)
+const unsigned long TPOST = 3000;  //Time between requests to TWX server (every 2 secs)
 const unsigned int sensorCount = 3;  //Number of sensor vars to send to TWX server (2)
 char* ssid = "IoT-B19"; //WiFi SSID
 char* password = "meca2017*"; //WiFi Pass
 char* host = "iot.dis.eafit.edu.co";  //TWX Host
 unsigned int port = 80; //TWX host port
-const size_t bufferSize = JSON_ARRAY_SIZE(1) + 3*JSON_ARRAY_SIZE(2) + 2*JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 160;
+const size_t bufferSize = JSON_ARRAY_SIZE(1) + 3 * JSON_ARRAY_SIZE(2) + 2 * JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 160;
 
 //Variables
 //->TWX Vars
@@ -46,35 +46,61 @@ String POST(float temperature, float humidity) {
   String body = "{\"Inputs\": {\"input1\": {\"ColumnNames\": [\"Temperature\", \"Humidity\", \"Year\", \"Month\", \"Day\", \"Military Time\", \"Anomaly\"], \"Values\": [[";
   body += "\"" + String((int)temperature) + "\"," + "\"" + String((int)humidity) + "\"," + "\"" + "" + "\"," + "\"" + "" + "\"," + "\"" + "" + "\"," + "\"" + "" + "\"," + "\"" + "" + "\"" + "]]}}}";
   if (azureml.connect("ussouthcentral.services.azureml.net", 443)) {
-    Serial.println("Connected to: ussouthcentral.services.azureml.net");
+    Serial.println(F("Connected to: ussouthcentral.services.azureml.net"));
     //Send the HTTP POST request:
-    azureml.print(F(String("POST ") + url + " HTTP/1.1\r\n" +
-                  "Host: ussouthcentral.services.azureml.net\r\n" +
-                  "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
-                  "Content-Type: application/json\r\n" +
-                  "Content-Length: " + String(body.length()) + "\r\n\r\n" +
-                  body + "\r\n\r\n"));
+    //    azureml.print(String("POST ") + url + " HTTP/1.1\r\n" +
+    //                  "Host: ussouthcentral.services.azureml.net\r\n" +
+    //                  "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
+    //                  "Content-Type: application/json\r\n" +
+    //                  "Content-Length: " + String(body.length()) + "\r\n\r\n" +
+    //                  body + "\r\n\r\n");
 
-    Serial.print(F(String("POST ") + url + " HTTP/1.1\r\n" +
-                 "Host: ussouthcentral.services.azureml.net\r\n" +
-                 "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
-                 "Content-Type: application/json\r\n" +
-                 "Content-Length: " + String(body.length()) + "\r\n\r\n" +
-                 body + "\r\n\r\n"));
+    //    Serial.print(String("POST ") + url + " HTTP/1.1\r\n" +
+    //                 "Host: ussouthcentral.services.azureml.net\r\n" +
+    //                 "Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg==\r\n" +
+    //                 "Content-Type: application/json\r\n" +
+    //                 "Content-Length: " + String(body.length()) + "\r\n\r\n" +
+    //                 body + "\r\n\r\n");
+
+    azureml.print(F("POST "));
+    azureml.print(url);
+    azureml.println(F(" HTTP/1.1"));
+    azureml.println(F("Host: ussouthcentral.services.azureml.net"));
+    azureml.println(F("Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg=="));
+    azureml.println(F("Content-Type: application/json"));
+    azureml.print(F("Content-Length: "));
+    azureml.println(body.length());
+    azureml.println();
+    azureml.print(body);
+    azureml.println();
+
+    Serial.print(F("POST "));
+    Serial.print(url);
+    Serial.println(F(" HTTP/1.1"));
+    Serial.println(F("Host: ussouthcentral.services.azureml.net"));
+    Serial.println(F("Authorization: Bearer ubj7KmBnvDqUE+qAFVssQik8tJWUYCNX1GQQweNWsaPT/BXbm9wZEb7rouNvRUs1R/YAB72wGrMVRY5zlMYtUg=="));
+    Serial.println(F("Content-Type: application/json"));
+    Serial.print(F("Content-Length: "));
+    Serial.println(body.length());
+    Serial.println();
+    Serial.print(body);
+    Serial.println();
 
     unsigned long timeout = millis();
     while (azureml.available() == 0) {
       if (millis() - timeout > 5000) {
-        Serial.println(">>> Client Timeout !");
+        Serial.println(F(">>> Client Timeout !"));
         azureml.stop();
         return "Error";
       }
     }
     String json = "";
+    String reply = "";
     boolean httpBody = false;
     while (azureml.available()) {
       String line = azureml.readStringUntil('\r');
-      Serial.print(line);
+      reply += line;
+      //Serial.print(line);
       if (!httpBody && line.charAt(1) == '{') {
         httpBody = true;
       }
@@ -83,10 +109,12 @@ String POST(float temperature, float humidity) {
         httpBody = false;
       }
     }
+    azureml.stop();
+    Serial.println(reply);
     return json;
   }
   else {
-    Serial.println("The connection could not be established");
+    Serial.println(F("The connection could not be established"));
     azureml.stop();
     return "Error";
   }
@@ -94,19 +122,19 @@ String POST(float temperature, float humidity) {
 
 void printWifiStatus() {
   //Print SSID name
-  Serial.print("SSID: ");
+  Serial.print(F("SSID: "));
   Serial.println(WiFi.SSID());
 
   //Print ipv4 assigned to WiFi101 module
   IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
+  Serial.print(F("IP Address: "));
   Serial.println(ip);
 
   //Print signal strength for WiFi101 module
   long rssi = WiFi.RSSI();
-  Serial.print("Signal strength (RSSI):");
+  Serial.print(F("Signal strength (RSSI):"));
   Serial.print(rssi);
-  Serial.println(" dBm");
+  Serial.println(F(" dBm"));
 }
 
 void WiFiInit() {
@@ -114,14 +142,14 @@ void WiFiInit() {
 
   //Check if WiFi Shield is connected to Arduino
   if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi shield not present");
+    Serial.println(F("WiFi shield not present"));
     //Infinite loop if shield is not detected
     while (true);
   }
 
   //Attempt a WiFi connection to desired access point at ssid, password
   while ( WiFi.status() != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
+    Serial.print(F("Attempting to connect to SSID: "));
     Serial.println(ssid);
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     WiFi.begin(ssid, password);
@@ -154,7 +182,7 @@ void loop() {
     JsonObject& root = jsonBuffer.parseObject(inputJson);
     Serial.println(inputJson);
     if (root.success()) anomaly = root["Results"]["output1"]["value"]["Values"][0][1];  //Extract anomaly from Azure recieved JSON
-    else Serial.println("Error parsing json");
+    else Serial.println(F("Error parsing json"));
     Serial.println("Anomaly: " + String(anomaly));
     if (anomaly == 1) digitalWrite(LED_BUILTIN, HIGH);  //Turn ON the Built In LED if there is an anomaly
     else digitalWrite(LED_BUILTIN, LOW);  //Turn OFF Built In LED if everything is OK
