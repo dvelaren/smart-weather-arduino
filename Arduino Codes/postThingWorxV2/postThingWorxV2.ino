@@ -88,8 +88,6 @@ void loop() {
   if (millis() - lastConnectionTime > TPOST) {  //Send request to server every TPOST seconds
     propertyValues[0] = dht.readTemperature(); //Read DHT11 temperature
     propertyValues[1] = dht.readHumidity(); //Read DHT11 humidity
-    //propertyValues[0] = 24; //Read DHT11 temperature
-    //propertyValues[1] = 35; //Read DHT11 humidity
     myThing.post(sensorCount, propertyNames, propertyValues); //Send values to server platform
     lastConnectionTime = millis();  //Refresh last connection time
   }
